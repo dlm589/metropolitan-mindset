@@ -16,7 +16,7 @@
     import municipalLabels from "../assets/csd-2021-centroids.geo.json";
     // logo
     import metroMindsetLogo from "../assets/metro-mindset-logo.svg";
-
+    import airpollution from "../../analysis/data/air-pollution/Toronto";
     // initial variables
     let pageWidth;
     let cmaSelected = "";
@@ -25,7 +25,7 @@
     let ctDataTable;
 
     let imgWidth = 102;
-    $: if (pageWidth < (102 + 250)) {
+    $: if (pageWidth < 102 + 250) {
         imgWidth = pageWidth - 250 - 1;
     } else {
         imgWidth = 102;
@@ -46,7 +46,7 @@
 
     let filteredData;
     $: filteredData = cmaData.filter(
-        (item) => item.CMAUID === cmauidSelected
+        (item) => item.CMAUID === cmauidSelected,
     )[0];
 
     let cmaAll = cmaData
@@ -60,7 +60,7 @@
     function cmaSelectMapUpdate(cmaname) {
         cmaSelected = cmaname;
         let filteredData = cmaData.filter(
-            (item) => item.CMANAME === cmaSelected
+            (item) => item.CMANAME === cmaSelected,
         )[0];
 
         cmauidSelected = filteredData.CMAUID;
@@ -94,14 +94,14 @@
             map.setPaintProperty(
                 "metro-mindset-csd-2021-border",
                 "line-opacity",
-                1
+                1,
             );
             map.setPaintProperty("municipalLabels", "text-opacity", 1);
         } else {
             map.setPaintProperty(
                 "metro-mindset-csd-2021-border",
                 "line-opacity",
-                0
+                0,
             );
             map.setPaintProperty("municipalLabels", "text-opacity", 0);
         }
@@ -109,6 +109,7 @@
 
     // Changing the map layer
 
+    // This is a drop down list for all the map layers that users can select from.
     let mapLayers = [
         "Street Map",
         "Satellite",
@@ -117,7 +118,9 @@
         "Median Household Income",
         "Core Housing Need",
         "Recent Immigrant Population",
+        "Air Pollution",
     ];
+
     let mapSelected = "Street Map";
 
     const choropleths = {
@@ -214,7 +217,7 @@
                         ],
                     },
                 },
-                "transitStops"
+                "transitStops",
             );
         } else if (layer === "Median Household Income") {
             try {
@@ -262,7 +265,7 @@
                         ],
                     },
                 },
-                "transitStops"
+                "transitStops",
             );
         } else if (layer === "Dwelling Density") {
             try {
@@ -299,7 +302,7 @@
                         ],
                     },
                 },
-                "transitStops"
+                "transitStops",
             );
         } else if (layer === "% of Renter") {
             try {
@@ -338,7 +341,7 @@
                         ],
                     },
                 },
-                "transitStops"
+                "transitStops",
             );
         } else if (layer === "Core Housing Need") {
             try {
@@ -377,7 +380,7 @@
                         ],
                     },
                 },
-                "transitStops"
+                "transitStops",
             );
         } else if (layer === "Recent Immigrant Population") {
             try {
@@ -414,8 +417,32 @@
                         ],
                     },
                 },
-                "transitStops"
+                "transitStops",
             );
+        } else if (layer === "Air Pollution") {
+            try {
+                map.removeLayer("ctPolygon");
+                map.removeSource("ctPolygon");
+            } catch {}
+            map.setPaintProperty("mapbox-satellite", "raster-opacity", 0.011);
+            map.addSource("radar", {
+                type: "image",
+                url: "https://docs.mapbox.com/mapbox-gl-js/assets/radar.gif",
+                coordinates: [
+                    [-80.425, 46.437],
+                    [-71.516, 46.437],
+                    [-71.516, 37.936],
+                    [-80.425, 37.936],
+                ],
+            });
+            map.addLayer({
+                id: "air-pollution-layer",
+                type: "raster",
+                source: airpollution,
+                paint: {
+                    "raster-fade-duration": 0,
+                },
+            });
         }
     }
 
@@ -425,7 +452,9 @@
     async function loadCensusTract(cmauid) {
         if (cmauid === cmauidSelected) {
             try {
-                const response = await fetch(`/metropolitan-mindset/ct-${cmauid}-2021.topo.json`);
+                const response = await fetch(
+                    `/metropolitan-mindset/ct-${cmauid}-2021.topo.json`,
+                );
                 ctPolygon = await response.json();
 
                 ctPolygon = topojson.feature(ctPolygon, `ct-${cmauid}-2021`);
@@ -571,7 +600,7 @@
                         "circle-color": "#8a8783",
                     },
                 },
-                "bridge-minor-case"
+                "bridge-minor-case",
             );
         });
 
@@ -599,7 +628,7 @@
                         "line-color": "#8a8783",
                     },
                 },
-                "bridge-minor-case"
+                "bridge-minor-case",
             );
         });
 
@@ -682,21 +711,34 @@
 </svelte:head>
 
 <main>
-
     <div class="logo">
         <a href="https://schoolofcities.utoronto.ca/the-metropolitan-mindset/"
-            ><img src={metroMindsetLogo} alt="Metropolitan Mindset" width="{imgWidth}"/></a
+            ><img
+                src={metroMindsetLogo}
+                alt="Metropolitan Mindset"
+                width={imgWidth}
+            /></a
         >
     </div>
 
     <div id="content">
-
         <h1>Metropolitan Mindset Map</h1>
 
         <div class="bar" />
 
         <p>
-            Created in support of <a href="https://schoolofcities.utoronto.ca/people/don-iveson/" target="_blank">Don Iveson</a>'s and <a href="https://munkschool.utoronto.ca/person/gabriel-eidelman" target="_blank">Gabriel Eidelman</a>'s <a href="https://schoolofcities.utoronto.ca/the-metropolitan-mindset/" target="_blank">Metropolitan Mindset Playbook</a> 
+            Created in support of <a
+                href="https://schoolofcities.utoronto.ca/people/don-iveson/"
+                target="_blank">Don Iveson</a
+            >'s and
+            <a
+                href="https://munkschool.utoronto.ca/person/gabriel-eidelman"
+                target="_blank">Gabriel Eidelman</a
+            >'s
+            <a
+                href="https://schoolofcities.utoronto.ca/the-metropolitan-mindset/"
+                target="_blank">Metropolitan Mindset Playbook</a
+            >
             <!-- by <a href="https://schoolofcities.utoronto.ca/people/don-iveson/" target="_blank">Don Iveson</a> and <a href="https://munkschool.utoronto.ca/person/gabriel-eidelman" target="_blank">Gabriel Eidelman</a> -->
         </p>
 
@@ -742,39 +784,39 @@
             <div class="bar" />
 
             {#if cmaSelected !== ""}
-            <p>
-                Number of Municipalities: <span id="number"
-                    >{filteredData["Total_Number_of_Municipalities"]}</span
-                ><br />
+                <p>
+                    Number of Municipalities: <span id="number"
+                        >{filteredData["Total_Number_of_Municipalities"]}</span
+                    ><br />
 
-                Total Land Area (sq.km):
-                <span id="number"
-                    >{Math.round(
-                        filteredData["Land_Area_(sq_km)"]
-                    ).toLocaleString()}</span
-                ><br />
+                    Total Land Area (sq.km):
+                    <span id="number"
+                        >{Math.round(
+                            filteredData["Land_Area_(sq_km)"],
+                        ).toLocaleString()}</span
+                    ><br />
 
-                GDP (2019) in mllions:
-                <span id="number"
-                    >${Math.round(
-                        filteredData["GDP_2019_(millions)"]
-                    ).toLocaleString()}</span
-                ><br />
+                    GDP (2019) in mllions:
+                    <span id="number"
+                        >${Math.round(
+                            filteredData["GDP_2019_(millions)"],
+                        ).toLocaleString()}</span
+                    ><br />
 
-                Population (2021):
-                <span id="number"
-                    >{Math.round(
-                        filteredData["Population_2021"]
-                    ).toLocaleString()}</span
-                ><br />
+                    Population (2021):
+                    <span id="number"
+                        >{Math.round(
+                            filteredData["Population_2021"],
+                        ).toLocaleString()}</span
+                    ><br />
 
-                % of Population in Central City:
-                <span id="number"
-                    >{filteredData[
-                        "Proportion_of_Population_In_Central"
-                    ]}%</span
-                >
-            </p>
+                    % of Population in Central City:
+                    <span id="number"
+                        >{filteredData[
+                            "Proportion_of_Population_In_Central"
+                        ]}%</span
+                    >
+                </p>
             {/if}
 
             <p>
@@ -1436,7 +1478,7 @@
         </div>
     </div>
 
-    <div id="map" bind:clientWidth={pageWidth}/>
+    <div id="map" bind:clientWidth={pageWidth} />
 </main>
 
 <style>
@@ -1450,7 +1492,6 @@
         width: 100%;
         height: 100%;
     }
-
 
     #map {
         height: 100%;
@@ -1525,8 +1566,6 @@
     a:hover {
         color: var(--brandMedGreen);
     }
-
-    
 
     #content {
         width: 250px;
